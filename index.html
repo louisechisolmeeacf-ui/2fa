@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Custom 2FA Code Generator</title>
+    <!-- jsOTP লাইব্রেরি যুক্ত করা হচ্ছে -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsOTP/1.0.0/jsOTP.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; background-color: #f4f4f9; }
+        .container { max-width: 400px; margin: auto; padding: 20px; background: white; border-radius: 10px; box-shadow: 0px 0px 10px rgba(0,0,0,0.1); }
+        input { width: 80%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; text-align: center; }
+        button { padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        #code-display { font-size: 32px; font-weight: bold; color: #28a745; margin-top: 20px; letter-spacing: 5px; }
+        #timer { color: #dc3545; font-size: 14px; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>2FA Code Generator</h2>
+    <p>আপনার ফেসবুকের Secret 2FA Key-টি নিচে দিন:</p>
+    <input type="text" id="secret-key" placeholder="JBSWY3DPEHPK3PXP..." autocomplete="off">
+    <br>
+    <button onclick="startGenerator()">কোড তৈরি করুন</button>
+
+    <div id="code-display">- - - - - -</div>
+    <div id="timer"></div>
+</div>
+
+<script>
+    let timerInterval;
+
+    function startGenerator() {
+        // ইনপুট থেকে সিক্রেট কি নেওয়া (স্পেস থাকলে তা মুছে ফেলা)
+        let secret = document.getElementById('secret-key').value.replace(/\s+/g, '');
+        
+        if (!secret) {
+            alert("অনুগ্রহ করে একটি সঠিক Secret Key দিন!");
+            return;
+        }
+
+        // আগে কোনো টাইমার চালু থাকলে তা বন্ধ করা
+        if (timerInterval) clearInterval(timerInterval);
+
+        // jsOTP অবজেক্ট তৈরি
+        const totp = jsOTP.totp();
+
+        function updateCode() {
+            try {
+                // সিক্রেট কি দিয়ে ৬ ডিজিটের কোড তৈরি
+                let code = totp.getOTP(secret);
+                document.getElementById('code-display').innerText = code;
+                
+                // পরবর্তী কোড পরিবর্তনের সময় (৩০ সেকেন্ডের কাউন্টডাউন)
+                let epoch = Math.round(new Date().getTime() / 1000);
+                let timeLeft = 30 - (epoch % 30);
+                document.getElementById('timer').innerText = `নতুন কোড আসবে ${timeLeft} সেকেন্ড পর`;
+            } catch (error) {
+                document.getElementById('code-display').innerText = "ERROR";
+                document.getElementById('timer').innerText = "ভুল সিক্রেট কি দেওয়া হয়েছে!";
+            }
+        }
+
+        // প্রথমবার কোড দেখানো এবং প্রতি ১ সেকেন্ড পর পর টাইমার আপডেট করা
+        updateCode();
+        timerInterval = setInterval(updateCode, 1000);
+    }
+</script>
+
+</body>
+</html>
